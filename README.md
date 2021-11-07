@@ -13,7 +13,7 @@ A custom media browser card for the Home Assistant Lovelace UI. The card provide
 
 ![Screenshot](/docs/screenshot.png?raw=true "Screenshot")
 
-**Installation**
+## Installation
 
 The instructions follow the basic steps that are described by the [Lovelace: Custom cards](https://developers.home-assistant.io/docs/frontend/custom-ui/lovelace-custom-card) documentation.
 
