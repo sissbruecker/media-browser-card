@@ -4,10 +4,10 @@ A custom media browser card for the Home Assistant Lovelace UI. The card provide
 
 **Features**
 - Browse media folders
-- Play media files on the configured media player
+- Play media files on the selected media player, or in a browser tab
 - Shows currently playing media item
-- Remembers current directory between reloads
-- Remembers with items have been played
+- Shows which items have already been played
+- Keeps current directory between reloads
 
 **Screenshot**
 
@@ -22,6 +22,4 @@ The instructions follow the basic steps that are described by the [Lovelace: Cus
 3. Edit the Lovelace Dashboard where you want to use the card. Add a new manual / custom card, and use the following YAML configuration:
     ```
     type: custom:media-browser-card
-    player: <media-player-entity-id>
     ```
-   Replace `<media-player-entity-id>` with a valid entity ID of a media player. For example, if you have a Chromecast, you might have an entity `mediaplayer.chromecast`.

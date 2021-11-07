@@ -201,9 +201,6 @@ class MediaBrowserCard extends LitElement {
   }
 
   setConfig(config) {
-    if (!config.player) {
-      throw new Error("You need to define a media player entity");
-    }
     this.config = config;
   }
 
