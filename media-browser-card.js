@@ -1,8 +1,4 @@
-import {
-  LitElement,
-  html,
-  css
-} from "https://unpkg.com/lit-element@3.0.1/lit-element.js?module";
+import { css, html, LitElement } from "https://unpkg.com/lit-element@3.0.1/lit-element.js?module";
 
 const folderIcon = html`
   <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,7 +62,7 @@ class MediaBrowserCard extends LitElement {
       hass: {},
       config: {},
       _currentDirectoryItem: { state: true },
-      _playingItem: { state: true },
+      _currentPlayingItemId: { state: true },
       _currentPath: { state: true }
     };
   }
@@ -139,6 +135,15 @@ class MediaBrowserCard extends LitElement {
     this.loadCurrentDirectory();
   }
 
+  updated(changedProps) {
+    super.updated(changedProps);
+
+    if (changedProps.has("hass")) {
+      const playerState = this.hass ? this.hass.states[this.config.player] : null;
+      this._currentPlayingItemId = playerState ? decodeURI(playerState.attributes.media_content_id) : null;
+    }
+  }
+
   getCardSize() {
     return 3;
   }
@@ -174,8 +179,7 @@ class MediaBrowserCard extends LitElement {
   }
 
   async playItem(item) {
-    this._playingItem = item;
-    playMedia(this.hass, this.config, item);
+    await playMedia(this.hass, this.config, item);
     if (!clientData.playedItemIds.includes(item.media_content_id)) {
       updateClientData({
         playedItemIds: [...clientData.playedItemIds, item.media_content_id]
@@ -212,13 +216,11 @@ class MediaBrowserCard extends LitElement {
   }
 
   renderFileList(items) {
-    const playerState = this.hass ? this.hass.states[this.config.player] : null;
-    const activeMediaContentId = playerState ? decodeURI(playerState.attributes.media_content_id) : null;
-
     const rows = items.map(item => {
       const icon = isDirectory(item) ? folderIcon : fileIcon;
-      const isPlaying = (this._playingItem && this._playingItem.media_content_id === item.media_content_id)
-        || (!this._playingItem && !isDirectory(item) && activeMediaContentId.indexOf(item.title) >= 0);
+      const isPlaying = !isDirectory(item)
+        && this._currentPlayingItemId
+        && (this._currentPlayingItemId === item.media_content_id || this._currentPlayingItemId.indexOf(item.title) >= 0);
       const hasBeenPlayed = clientData.playedItemIds.includes(item.media_content_id);
       const itemClass = isPlaying ? "text-primary" : hasBeenPlayed ? "text-gray" : "";
 
