@@ -189,7 +189,7 @@ class MediaBrowserCard extends LitElement {
       }
 
       // Update currently played items
-      const playerState = this.hass ? this.hass.states[this.config.player] : null;
+      const playerState = this.hass && this._selectedPlayer ? this.hass.states[this._selectedPlayer.entity_id] : null;
       this._currentPlayingItemId = playerState
         ? decodeURI(playerState.attributes.media_content_id)
         : null;
