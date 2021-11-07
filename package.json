@@ -1,0 +1,8 @@
+{
+  "name": "media-browser-card",
+  "version": "1.0.0",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^2.4.1"
+  }
+}

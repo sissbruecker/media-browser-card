@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Media Browser Card Test Page</title>
+</head>
+<body>
+<div style="width: 400px; height: 3000px;">
+  <media-browser-card></media-browser-card>
+</div>
+
+<script type="module">
+  import "./media-browser-card.js";
+  import { hassMock } from "./mock.js";
+
+  const mediaBrowserCard = document.querySelector("media-browser-card");
+  mediaBrowserCard.config = { player: "mediaplayer.chromecast_ultra" };
+  mediaBrowserCard.hass = hassMock;
+</script>
+</body>
+</html>
