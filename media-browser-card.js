@@ -137,7 +137,6 @@ class MediaBrowserCard extends LitElement {
 
   firstUpdated() {
     this.loadCurrentDirectory();
-    console.log(this.hass);
   }
 
   getCardSize() {
