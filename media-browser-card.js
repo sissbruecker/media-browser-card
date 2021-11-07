@@ -145,21 +145,16 @@ class MediaBrowserCard extends LitElement {
         cursor: default;
       }
       
-      .file {
-        display: flex;
-        align-items: center;
-      }
-
-      .file .icon {
+      .table td.icon-col {
         width: 24px;
-        height: 24px;
-        flex: 0 0 auto;
+        padding-right: 0;
       }
       
-      .file span {
-        margin-left: 4px;
-        flex: 1 1 0;
-      }
+      .table .icon {
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
+      }      
         `;
   }
 
@@ -314,12 +309,13 @@ class MediaBrowserCard extends LitElement {
       const itemClass = isPlaying ? "text-primary" : hasBeenPlayed ? "text-gray" : "";
 
       return html`
-        <tr class="${itemClass}">
-          <td class="file" @click="${() => this.select(item)}">
+        <tr class="${itemClass}"
+            @click="${() => this.select(item)}">
+          <td class="icon-col">
             ${icon}
-            <span class="truncate">
-              ${item.title}
-            </span>
+          </td>
+          <td class="truncate">
+            ${item.title}
           </td>
         </tr>
       `;
