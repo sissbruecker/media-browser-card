@@ -59,7 +59,7 @@ async function playMediaInBrowser(hass, item) {
 }
 
 function isDirectory(item) {
-  return item.media_class === "directory";
+  return ["directory", "app"].includes(item.media_class);
 }
 
 let clientData;
