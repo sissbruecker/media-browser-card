@@ -240,7 +240,7 @@ class MediaBrowserCard extends LitElement {
 
     return html`
       <div
-        class="h-full flex flex-col divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow"
+        class="h-full flex flex-col divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 dark:divide-gray-700"
       >
         <div class="flex flex-col p-4 gap-4">
           <div class="flex justify-between items-center">
@@ -252,7 +252,7 @@ class MediaBrowserCard extends LitElement {
                 <div>
                   <button
                     type="button"
-                    class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
                     @click="${this.back}"
                   >
                     Back
@@ -290,7 +290,7 @@ class MediaBrowserCard extends LitElement {
 
     return html`
       <select
-        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 text-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600"
+        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 text-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500"
         @change="${(event) =>
           this.selectPlayer(
             this._availablePlayers.find(
@@ -318,17 +318,16 @@ class MediaBrowserCard extends LitElement {
       const hasBeenPlayed = clientData.playedItemIds.includes(
         item.media_content_id
       );
-      const itemClass = isPlaying ? "text-indigo-700 bg-indigo-50 hover:bg-indigo-100" : hasBeenPlayed ? "bg-gray-50 text-gray-600 hover:bg-gray-100" : "text-gray-900 hover:bg-gray-50";
+      const itemClass = isPlaying
+        ? "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-200 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+        : hasBeenPlayed
+        ? "bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+        : "text-gray-900 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700";
 
       return html`
-        <tr
-          class="${itemClass}"
-          @click="${() => this.select(item)}"
-        >
+        <tr class="${itemClass}" @click="${() => this.select(item)}">
           <td class="pl-4 py-3.5">${icon}</td>
-          <td
-            class="w-full px-4 py-3.5 text-left text-sm font-semibold"
-          >
+          <td class="w-full px-4 py-3.5 text-left text-sm font-semibold">
             ${item.title}
           </td>
         </tr>
@@ -336,7 +335,9 @@ class MediaBrowserCard extends LitElement {
     });
 
     return html` <table class="min-w-full">
-      <tbody class="divide-y divide-gray-200 bg-white">
+      <tbody
+        class="divide-y divide-gray-200 bg-white dark:bg-gray-800 dark:divide-gray-700"
+      >
         ${rows}
       </tbody>
     </table>`;
