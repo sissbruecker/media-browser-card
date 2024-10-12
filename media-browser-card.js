@@ -36,6 +36,25 @@ const fileIcon = html`
     />
   </svg>
 `;
+const menuIcon = html`
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="icon w-5 h-5"
+  >
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+  </svg>
+`;
 
 const BROWSER_PLAYER = {
   entity_id: "browser",
@@ -122,6 +141,7 @@ class MediaBrowserCard extends LitElement {
       _currentPath: { state: true },
       _availablePlayers: { state: true },
       _selectedPlayer: { state: true },
+      _menuOpened: { state: true },
     };
   }
 
@@ -142,6 +162,7 @@ class MediaBrowserCard extends LitElement {
     super();
     this._currentPath = clientData.currentPath;
     this._availablePlayers = [];
+    this._menuOpened = false;
   }
 
   firstUpdated() {
@@ -233,6 +254,20 @@ class MediaBrowserCard extends LitElement {
     }
   }
 
+  openMenu() {
+    this._menuOpened = true;
+
+    setTimeout(() => {
+      document.addEventListener("click", this.closeMenu.bind(this), {
+        once: true,
+      });
+    });
+  }
+
+  closeMenu() {
+    this._menuOpened = false;
+  }
+
   jumpToLastPlayed() {
     const fileRows = this.shadowRoot.querySelectorAll("tr");
     const lastPlayed = Array.from(fileRows)
@@ -242,6 +277,12 @@ class MediaBrowserCard extends LitElement {
     if (lastPlayed) {
       lastPlayed.scrollIntoView();
     }
+  }
+
+  clearPlayedItems() {
+    updateClientData({
+      playedItemIds: [],
+    });
   }
 
   render() {
@@ -268,13 +309,7 @@ class MediaBrowserCard extends LitElement {
                   >
                     Back
                   </button>
-                  <button
-                    type="button"
-                    class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
-                    @click="${this.jumpToLastPlayed}"
-                  >
-                    Jump to last played
-                  </button>
+                  ${this.renderMenu()}
                 </div>
               `
             : null}
@@ -321,6 +356,56 @@ class MediaBrowserCard extends LitElement {
     `;
   }
 
+  renderMenu() {
+    return html`
+      <div class="relative inline-block text-left">
+        <div>
+          <button
+            type="button"
+            class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
+            id="menu-button"
+            aria-expanded="true"
+            aria-haspopup="true"
+            @click="${this.openMenu}"
+          >
+            ${menuIcon}
+          </button>
+        </div>
+
+        ${this._menuOpened
+          ? html`
+              <div
+                class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-700 dark:ring-gray-600"
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="menu-button"
+                tabindex="-1"
+              >
+                <div class="py-1" role="none">
+                  <button
+                    class="w-full block text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-600"
+                    role="menuitem"
+                    id="menu-item-0"
+                    @click="${this.jumpToLastPlayed}"
+                  >
+                    Jump to last played
+                  </button>
+                  <button
+                    class="w-full block text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-600"
+                    role="menuitem"
+                    id="menu-item-0"
+                    @click="${this.clearPlayedItems}"
+                  >
+                    Clear played items
+                  </button>
+                </div>
+              </div>
+            `
+          : null}
+      </div>
+    `;
+  }
+
   renderEmptyHint() {
     return html` <div class="p-4">No files found.</div> `;
   }
@@ -337,7 +422,7 @@ class MediaBrowserCard extends LitElement {
         item.media_content_id
       );
       const itemClass = isPlaying
-        ? "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-200 dark:bg-indigo-700 dark:hover:bg-indigo-600"
+        ? "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-200 dark:bg-indigo-800 dark:hover:bg-indigo-700"
         : hasBeenPlayed
         ? "bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
         : "text-gray-900 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700";
