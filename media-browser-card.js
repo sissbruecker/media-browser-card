@@ -36,25 +36,6 @@ const fileIcon = html`
     />
   </svg>
 `;
-const menuIcon = html`
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    class="icon w-5 h-5"
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-    <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-    <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-  </svg>
-`;
 
 const BROWSER_PLAYER = {
   entity_id: "browser",
@@ -97,6 +78,22 @@ async function playMediaInBrowser(hass, item) {
   // Ideally we would like to open a dialog, as is done here: https://github.com/home-assistant/frontend/blob/c26a59d8059497104ed52ad44b17146547f0173c/src/panels/media-browser/ha-panel-media-browser.ts#L96
   // For now just open a new tab
   window.open(resolvedUrl.url, "_blank");
+}
+
+function getCurrentProgress(stateObj) {
+  let progress = stateObj.attributes.media_position;
+
+  if (stateObj.state !== "playing") {
+    return progress;
+  }
+  progress +=
+    (Date.now() -
+      new Date(stateObj.attributes.media_position_updated_at).getTime()) /
+    1000.0;
+  // Prevent negative values, so we do not go back to 59:59 at the start
+  // for example if there are slight clock sync deltas between backend and frontend and
+  // therefore media_position_updated_at might be slightly larger than Date.now().
+  return progress < 0 ? 0 : progress;
 }
 
 function isDirectory(item) {
@@ -142,6 +139,7 @@ class MediaBrowserCard extends LitElement {
       _availablePlayers: { state: true },
       _selectedPlayer: { state: true },
       _menuOpened: { state: true },
+      _seekDelta: { state: true },
     };
   }
 
@@ -163,6 +161,7 @@ class MediaBrowserCard extends LitElement {
     this._currentPath = clientData.currentPath;
     this._availablePlayers = [];
     this._menuOpened = false;
+    this._seekDelta = 0;
   }
 
   firstUpdated() {
@@ -189,12 +188,12 @@ class MediaBrowserCard extends LitElement {
       }
 
       // Update currently played items
-      const playerState =
+      this._playerState =
         this.hass && this._selectedPlayer
           ? this.hass.states[this._selectedPlayer.entity_id]
           : null;
-      this._currentPlayingItemId = playerState
-        ? decodeURI(playerState.attributes.media_content_id)
+      this._currentPlayingItemId = this._playerState
+        ? decodeURI(this._playerState.attributes.media_content_id)
         : null;
     }
   }
@@ -285,6 +284,55 @@ class MediaBrowserCard extends LitElement {
     });
   }
 
+  handleSeekBackward() {
+    if (!this._currentPlayingItemId) {
+      return;
+    }
+    this._seekDelta -= 30;
+    this.debouncedSeek();
+  }
+
+  handleSeekForward() {
+    if (!this._currentPlayingItemId) {
+      return;
+    }
+    this._seekDelta += 30;
+    this.debouncedSeek();
+  }
+
+  debouncedSeek() {
+    if (this._seekTimeout) {
+      clearTimeout(this._seekTimeout);
+    }
+    this._seekTimeout = window.setTimeout(() => this.executeSeek(), 1500);
+  }
+
+  executeSeek() {
+    const currentPosition = getCurrentProgress(this._playerState);
+    let newPosition = currentPosition + this._seekDelta;
+    newPosition = Math.min(
+      newPosition,
+      this._playerState.attributes.media_duration
+    );
+    newPosition = Math.max(newPosition, 0);
+
+    this.hass.callService("media_player", "media_seek", {
+      entity_id: this._selectedPlayer.entity_id,
+      seek_position: newPosition,
+    });
+    this._seekDelta = 0;
+    this._seekTimeout = undefined;
+  }
+
+  formatSeekDelta() {
+    const prefixSign = this._seekDelta > 0 ? "+" : "-";
+    const absoluteDelta = Math.abs(this._seekDelta);
+    const minutes = Math.floor(absoluteDelta / 60);
+    const seconds = absoluteDelta % 60;
+
+    return `${prefixSign}${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }
+
   render() {
     const children =
       (this._currentDirectoryItem && this._currentDirectoryItem.children) || [];
@@ -309,7 +357,9 @@ class MediaBrowserCard extends LitElement {
                   >
                     Back
                   </button>
-                  ${this.renderMenu()}
+                  <div class="flex gap-2 items-center">
+                    ${this.renderSeekControls()} ${this.renderMenu()}
+                  </div>
                 </div>
               `
             : null}
@@ -356,19 +406,41 @@ class MediaBrowserCard extends LitElement {
     `;
   }
 
+  renderSeekControls() {
+    return html`
+      ${this._seekDelta
+        ? html`<span class="text-sm">${this.formatSeekDelta()}</span>`
+        : ""}
+      <button
+        type="button"
+        class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
+        @click="${this.handleSeekBackward}"
+      >
+        -30s
+      </button>
+      <button
+        type="button"
+        class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
+        @click="${this.handleSeekForward}"
+      >
+        +30s
+      </button>
+    `;
+  }
+
   renderMenu() {
     return html`
-      <div class="relative inline-block text-left">
+      <div class="self-stretch relative inline-block text-left">
         <div>
           <button
             type="button"
-            class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
+            class="inline-flex w-full justify-center gap-x-1.5 rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
             id="menu-button"
             aria-expanded="true"
             aria-haspopup="true"
             @click="${this.openMenu}"
           >
-            ${menuIcon}
+            ...
           </button>
         </div>
 
