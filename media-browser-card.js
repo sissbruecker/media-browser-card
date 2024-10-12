@@ -192,7 +192,7 @@ class MediaBrowserCard extends LitElement {
         this.hass && this._selectedPlayer
           ? this.hass.states[this._selectedPlayer.entity_id]
           : null;
-      this._currentPlayingItemId = this._playerState
+      this._currentPlayingItemId = this._playerState && this._playerState.attributes.media_content_id
         ? decodeURI(this._playerState.attributes.media_content_id)
         : null;
     }
@@ -407,6 +407,9 @@ class MediaBrowserCard extends LitElement {
   }
 
   renderSeekControls() {
+    if (!this._currentPlayingItemId) {
+      return null;
+    }
     return html`
       ${this._seekDelta
         ? html`<span class="text-sm">${this.formatSeekDelta()}</span>`
