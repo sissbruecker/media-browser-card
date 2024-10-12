@@ -2,7 +2,14 @@
   "name": "media-browser-card",
   "version": "1.0.0",
   "license": "MIT",
+  "scripts": {
+    "build": "postcss media-browser-card.js -o dist/media-browser-card.js"
+  },
   "devDependencies": {
-    "prettier": "^2.4.1"
+    "@tailwindcss/forms": "^0.5.9",
+    "postcss-cli": "^11.0.0",
+    "postcss-lit": "^1.1.1",
+    "prettier": "^2.4.1",
+    "tailwindcss": "^3.4.13"
   }
 }

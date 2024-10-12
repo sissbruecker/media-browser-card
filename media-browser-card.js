@@ -1,41 +1,63 @@
-import { css, html, LitElement } from "https://unpkg.com/lit-element@3.0.1/lit-element.js?module";
+import {
+  css,
+  html,
+  LitElement,
+} from "https://unpkg.com/lit-element@3.0.1/lit-element.js?module";
 
 const folderIcon = html`
-  <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="icon w-5 h-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+    />
   </svg>
 `;
 const fileIcon = html`
-  <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="icon w-5 h-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+    />
   </svg>
 `;
 
 const BROWSER_PLAYER = {
   entity_id: "browser",
   attributes: {
-    friendly_name: "Browser"
-  }
+    friendly_name: "Browser",
+  },
 };
 
 function getMediaPlayers(hass) {
-  const filteredPlayers = Object.values(hass.states).filter(entity =>
-    entity.entity_id.match(/^media_player\./)
-    && (entity.attributes.supported_features & 131072) !== 0
+  const filteredPlayers = Object.values(hass.states).filter(
+    (entity) =>
+      entity.entity_id.match(/^media_player\./) &&
+      (entity.attributes.supported_features & 131072) !== 0
   );
 
-  return [
-    BROWSER_PLAYER,
-    ...filteredPlayers
-  ];
+  return [BROWSER_PLAYER, ...filteredPlayers];
 }
 
 async function browseMedia(hass, mediaContentId) {
   return hass.callWS({
     type: "media_source/browse_media",
-    media_content_id: mediaContentId
+    media_content_id: mediaContentId,
   });
 }
 
@@ -43,14 +65,14 @@ async function playMedia(hass, entity_id, item) {
   return hass.callService("media_player", "play_media", {
     entity_id,
     media_content_id: item.media_content_id,
-    media_content_type: item.media_content_type
+    media_content_type: item.media_content_type,
   });
 }
 
 async function playMediaInBrowser(hass, item) {
   const resolvedUrl = await hass.callWS({
     type: "media_source/resolve_media",
-    media_content_id: item.media_content_id
+    media_content_id: item.media_content_id,
   });
 
   // Ideally we would like to open a dialog, as is done here: https://github.com/home-assistant/frontend/blob/c26a59d8059497104ed52ad44b17146547f0173c/src/panels/media-browser/ha-panel-media-browser.ts#L96
@@ -71,10 +93,14 @@ function loadClientData() {
     clientData = JSON.parse(clientDataJson);
   }
 
-  clientData = Object.assign({}, {
-    playedItemIds: [],
-    currentPath: []
-  }, clientData);
+  clientData = Object.assign(
+    {},
+    {
+      playedItemIds: [],
+      currentPath: [],
+    },
+    clientData
+  );
 }
 
 loadClientData();
@@ -95,67 +121,21 @@ class MediaBrowserCard extends LitElement {
       _currentPlayingItemId: { state: true },
       _currentPath: { state: true },
       _availablePlayers: { state: true },
-      _selectedPlayer: { state: true }
+      _selectedPlayer: { state: true },
     };
   }
 
   static get styles() {
     return css`
-      /* Apply Spectre.css root style on host */
-      :host {
-        -webkit-text-size-adjust: 100%;
-        -ms-text-size-adjust: 100%;
-        line-height: 1.5;
-        -webkit-tap-highlight-color: transparent;
-        background: #fff;
-        color: #3b4351;
-        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-        font-size: .8rem;
-        overflow-x: hidden;
-        text-rendering: optimizeLegibility; 
-      }
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
 
-      .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
+      :host {
+        display: block;
+        height: var(--media-card-height, 500px);
       }
-      
-      .card-header select {
-        width: auto;
-      }
-      
-      .card-body {
-        overflow-x: hidden;
-        overflow-y: auto;
-      }
-      
-      .truncate {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .table {
-        table-layout: fixed;
-        width: 100%;
-      }
-      
-      .table tr {
-        cursor: default;
-      }
-      
-      .table td.icon-col {
-        width: 24px;
-        padding-right: 0;
-      }
-      
-      .table .icon {
-        width: 24px;
-        height: 24px;
-        vertical-align: middle;
-      }      
-        `;
+    `;
   }
 
   constructor() {
@@ -175,16 +155,23 @@ class MediaBrowserCard extends LitElement {
       // Update available media players
       this._availablePlayers = this.hass ? getMediaPlayers(this.hass) : [];
       const isSelectedPlayerAvailable = this._selectedPlayer
-        ? this._availablePlayers.some(player => player.entity_id === this._selectedPlayer.entity_id)
+        ? this._availablePlayers.some(
+            (player) => player.entity_id === this._selectedPlayer.entity_id
+          )
         : false;
       if (!isSelectedPlayerAvailable) {
-        const newPlayer = this._availablePlayers.find(player => player.entity_id === clientData.selectedPlayerId)
-          || this._availablePlayers[0];
+        const newPlayer =
+          this._availablePlayers.find(
+            (player) => player.entity_id === clientData.selectedPlayerId
+          ) || this._availablePlayers[0];
         this.selectPlayer(newPlayer);
       }
 
       // Update currently played items
-      const playerState = this.hass && this._selectedPlayer ? this.hass.states[this._selectedPlayer.entity_id] : null;
+      const playerState =
+        this.hass && this._selectedPlayer
+          ? this.hass.states[this._selectedPlayer.entity_id]
+          : null;
       this._currentPlayingItemId = playerState
         ? decodeURI(playerState.attributes.media_content_id)
         : null;
@@ -219,11 +206,14 @@ class MediaBrowserCard extends LitElement {
 
   selectPlayer(player) {
     this._selectedPlayer = player;
-    updateClientData({ selectedPlayerId: player ? player.entity_id : undefined });
+    updateClientData({
+      selectedPlayerId: player ? player.entity_id : undefined,
+    });
   }
 
   async loadCurrentDirectory() {
-    const directoryId = this._currentPath[this._currentPath.length - 1] || undefined;
+    const directoryId =
+      this._currentPath[this._currentPath.length - 1] || undefined;
     this._currentDirectoryItem = await browseMedia(this.hass, directoryId);
   }
 
@@ -238,33 +228,43 @@ class MediaBrowserCard extends LitElement {
 
     if (!clientData.playedItemIds.includes(item.media_content_id)) {
       updateClientData({
-        playedItemIds: [...clientData.playedItemIds, item.media_content_id]
+        playedItemIds: [...clientData.playedItemIds, item.media_content_id],
       });
     }
   }
 
   render() {
-    const children = (this._currentDirectoryItem && this._currentDirectoryItem.children) || [];
+    const children =
+      (this._currentDirectoryItem && this._currentDirectoryItem.children) || [];
     const hasChildren = children.length > 0;
 
     return html`
-      <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h5>Media Browser</h5>
-            ${
-              this._currentPath.length > 0 ? html`
-                <button class="btn btn-sm" @click="${this.back}">Back</button>
-              ` : null
-            }
+      <div
+        class="h-full flex flex-col divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow"
+      >
+        <div class="flex flex-col p-4 gap-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-medium">Media Browser</h3>
+            <div>${this.renderPlayerSelect()}</div>
           </div>
-          <div>
-            ${this.renderPlayerSelect()}
-          </div>
+          ${this._currentPath.length > 0
+            ? html`
+                <div>
+                  <button
+                    type="button"
+                    class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    @click="${this.back}"
+                  >
+                    Back
+                  </button>
+                </div>
+              `
+            : null}
         </div>
-        <div class="card-body">
-          ${hasChildren ? this.renderFileList(children) : this.renderEmptyHint()}
+        <div class="flex-1 overflow-y-auto">
+          ${hasChildren
+            ? this.renderFileList(children)
+            : this.renderEmptyHint()}
         </div>
       </div>
     `;
@@ -276,57 +276,70 @@ class MediaBrowserCard extends LitElement {
     const selectedPlayerId = this._selectedPlayer
       ? this._selectedPlayer.entity_id
       : null;
-    const options = this._availablePlayers.map(player => {
+    const options = this._availablePlayers.map((player) => {
       const displayName = player.attributes.friendly_name || player.entity_id;
       return html`
-        <option value="${player.entity_id}"
-                ?selected="${player.entity_id === selectedPlayerId}">${displayName}
+        <option
+          value="${player.entity_id}"
+          ?selected="${player.entity_id === selectedPlayerId}"
+        >
+          ${displayName}
         </option>
       `;
     });
 
     return html`
-      <select class="form-select select-sm"
-              @change="${(event) => this.selectPlayer(this._availablePlayers.find(player => player.entity_id === event.target.value))}">
+      <select
+        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 text-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600"
+        @change="${(event) =>
+          this.selectPlayer(
+            this._availablePlayers.find(
+              (player) => player.entity_id === event.target.value
+            )
+          )}"
+      >
         ${options}
       </select>
     `;
   }
 
   renderEmptyHint() {
-    return html`
-      <div>No files found.</div>
-    `;
+    return html` <div class="p-4">No files found.</div> `;
   }
 
   renderFileList(items) {
-    const rows = items.map(item => {
+    const rows = items.map((item) => {
       const icon = isDirectory(item) ? folderIcon : fileIcon;
-      const isPlaying = !isDirectory(item)
-        && this._currentPlayingItemId
-        && (this._currentPlayingItemId === item.media_content_id || this._currentPlayingItemId.indexOf(item.title) >= 0);
-      const hasBeenPlayed = clientData.playedItemIds.includes(item.media_content_id);
-      const itemClass = isPlaying ? "text-primary" : hasBeenPlayed ? "text-gray" : "";
+      const isPlaying =
+        !isDirectory(item) &&
+        this._currentPlayingItemId &&
+        (this._currentPlayingItemId === item.media_content_id ||
+          this._currentPlayingItemId.indexOf(item.title) >= 0);
+      const hasBeenPlayed = clientData.playedItemIds.includes(
+        item.media_content_id
+      );
+      const itemClass = isPlaying ? "text-indigo-700 bg-indigo-50 hover:bg-indigo-100" : hasBeenPlayed ? "bg-gray-50 text-gray-600 hover:bg-gray-100" : "text-gray-900 hover:bg-gray-50";
 
       return html`
-        <tr class="${itemClass}"
-            @click="${() => this.select(item)}">
-          <td class="icon-col">
-            ${icon}
-          </td>
-          <td class="truncate">
+        <tr
+          class="${itemClass}"
+          @click="${() => this.select(item)}"
+        >
+          <td class="pl-4 py-3.5">${icon}</td>
+          <td
+            class="w-full px-4 py-3.5 text-left text-sm font-semibold"
+          >
             ${item.title}
           </td>
         </tr>
       `;
     });
 
-    return html`
-      <table class="table table-striped table-hover">
-        <tbody>
+    return html` <table class="min-w-full">
+      <tbody class="divide-y divide-gray-200 bg-white">
         ${rows}
-        </tbody>
-      </table>`;
+      </tbody>
+    </table>`;
   }
 }
 
