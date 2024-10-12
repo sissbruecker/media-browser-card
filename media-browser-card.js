@@ -233,6 +233,17 @@ class MediaBrowserCard extends LitElement {
     }
   }
 
+  jumpToLastPlayed() {
+    const fileRows = this.shadowRoot.querySelectorAll("tr");
+    const lastPlayed = Array.from(fileRows)
+      .reverse()
+      .find((row) => clientData.playedItemIds.includes(row.dataset.contentId));
+
+    if (lastPlayed) {
+      lastPlayed.scrollIntoView();
+    }
+  }
+
   render() {
     const children =
       (this._currentDirectoryItem && this._currentDirectoryItem.children) || [];
@@ -249,13 +260,20 @@ class MediaBrowserCard extends LitElement {
           </div>
           ${this._currentPath.length > 0
             ? html`
-                <div>
+                <div class="flex justify-between">
                   <button
                     type="button"
                     class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
                     @click="${this.back}"
                   >
                     Back
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:ring-gray-500 dark:hover:bg-gray-600"
+                    @click="${this.jumpToLastPlayed}"
+                  >
+                    Jump to last played
                   </button>
                 </div>
               `
@@ -325,7 +343,11 @@ class MediaBrowserCard extends LitElement {
         : "text-gray-900 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700";
 
       return html`
-        <tr class="${itemClass}" @click="${() => this.select(item)}">
+        <tr
+          class="${itemClass}"
+          @click="${() => this.select(item)}"
+          data-content-id=${item.media_content_id}
+        >
           <td class="pl-4 py-3.5">${icon}</td>
           <td class="w-full px-4 py-3.5 text-left text-sm font-semibold">
             ${item.title}
